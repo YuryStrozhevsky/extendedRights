@@ -34,7 +34,7 @@ using _ber_free = decltype([](BerElement* value){ ber_free(value, 0); });
 std::string hex_codes(std::vector<unsigned char> value)
 {
 	std::stringstream stream;
-	stream << std::uppercase << std::setfill('0') << std::hex;
+	stream << std::setfill('0') << std::hex;
 	std::for_each(value.begin(), value.end(), [&stream](unsigned char element){ stream << std::setw(2) << (int)element; });
 
 	return stream.str();
@@ -186,7 +186,7 @@ void extendedRightsLDAP()
 	}
 
 	if(!(config_ns.size() && schema_ns.size()))
-		return;
+		return error("Cannot find CN=Schema or CN=Configuration");
 	#pragma endregion
 	#pragma endregion
 
@@ -253,17 +253,13 @@ void extendedRightsLDAP()
 
 					std::unique_ptr<berval* [], _ldap_value_free_len> attributeSecurityGUID{ ldap_get_values_lenW(ldap_handle.get(), search_entry, (PWSTR)schemaAttrs[2]) };
 					if(attributeSecurityGUID)
-					{
 						security_guid_str = guid_to_string({ attributeSecurityGUID[0]->bv_val, attributeSecurityGUID[0]->bv_val + attributeSecurityGUID[0]->bv_len });
-						std::transform(security_guid_str.begin(), security_guid_str.end(), security_guid_str.begin(), tolower);
-					}
 
 					std::unique_ptr<berval* [], _ldap_value_free_len> schemaIdGuidValues{ ldap_get_values_lenW(ldap_handle.get(), search_entry, (PWSTR)schemaAttrs[3]) };
 					if(!schemaIdGuidValues)
 						return error("Cannot get values for schemaIdGuid");
 
 					std::string guid_str = guid_to_string({ schemaIdGuidValues[0]->bv_val, schemaIdGuidValues[0]->bv_val + schemaIdGuidValues[0]->bv_len });
-					std::transform(guid_str.begin(), guid_str.end(), guid_str.begin(), tolower);
 					#pragma endregion
 
 					#pragma region Store all values to map

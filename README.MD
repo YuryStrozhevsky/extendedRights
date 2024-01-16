@@ -10,7 +10,7 @@ The project is about getting information for all [**Extended Rights**](https://l
 	* _schemaIdGuid_ (major GUID for the attrubute);
 3. The _attributeSecurityGUID_ and _schemaIdGuid_ are both pure binary attributes (GUIDs in these attributes stored in binary form, not as a string). For the sake of our next steps we converting them to string represenation of GUIDs;
 4. Then we store all inside two maps. First map is for major information about each attribute with key=_schemaIdGuid_. Second map is a multimap, storing information about _extended rights property set_;
-5. Then we gather all _extender rights_ from "Configuration" namespace. Simplies LDAP filter for this would be "rightsGuid=*". Necessary attributes are:
+5. Then we gather all _extender rights_ from "Configuration" namespace. Simpliest LDAP filter for this would be "rightsGuid=*". Necessary attributes are:
 	* _name_ (for short name of _extended right_);
 	* _displayName_ (for full description of _extended right_);
 	* _appliesTo_ (this has multiple values pointed to object classes to which the _extended right_ applies);
