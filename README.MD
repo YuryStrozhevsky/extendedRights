@@ -1,5 +1,5 @@
 # Basic information
-The project is about getting information for all [**Extended Rights**](https://learn.microsoft.com/en-us/windows/win32/adschema/extended-rights). It is very hard to find all necessary information from official Microsoft documents, but apparently all the information exists in every Windows Domain. In this project I would like to give an example of how information about **Extender Rigths** could be retrived via pure Windows LDAP functions. Also it is built using Visual Studio 2022 and the code requires C++ 23 language standard.
+The project is about getting information for all [**Extended Rights**](https://learn.microsoft.com/en-us/windows/win32/adschema/extended-rights) and [**Property Sets**](https://learn.microsoft.com/en-us/windows/win32/adschema/property-sets). It is very hard to find all necessary information from official Microsoft documents, but apparently all the information exists in every Windows Domain. In this project I would like to give an example of how information about **Extender Rigths** could be retrived via pure Windows LDAP functions. Also it is built using Visual Studio 2022 and the code requires C++ 23 language standard.
 
 # Search algorithm
 1. There are "namespace contexts" under "RootDSE". In this search we would need "Schema" and "Configuration" namespaces;
