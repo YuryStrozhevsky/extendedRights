@@ -1,5 +1,5 @@
 # Basic information
-The project is about getting information for all [**Extended Rights**](https://learn.microsoft.com/en-us/windows/win32/adschema/extended-rights) and [**Property Sets**](https://learn.microsoft.com/en-us/windows/win32/adschema/property-sets). It is very hard to find all necessary information from official Microsoft documents and not all rights/elements of property sets are described in Microsoft docs, but apparently all the information exists in every Windows Domain. In this project I would like to give an example of how information about **Extender Rigths** and **Property Sets** could be retrived via pure Windows LDAP functions. Also I should say the code requires C++ 23 language standard compiler. I used Visual Studio 2022.
+The project is about getting information for all [**Extended Rights**](https://learn.microsoft.com/en-us/windows/win32/adschema/extended-rights), [**Property Sets**](https://learn.microsoft.com/en-us/windows/win32/adschema/property-sets) and [**Validated Writes**](https://learn.microsoft.com/en-us/windows/win32/adschema/validated-writes). It is very hard to find all necessary information from official Microsoft documents and not all rights/elements of property sets are described in Microsoft docs, but apparently all the information exists in every Windows Domain. In this project I would like to give an example of how information about **Extender Rigths** and **Property Sets** could be retrived via pure Windows LDAP functions. Also I should say the code requires C++ 23 language standard compiler. I used Visual Studio 2022.
 
 # Search algorithm
 1. There are "namespace contexts" under "RootDSE". In this search we would need "Schema" and "Configuration" namespaces;
@@ -17,6 +17,12 @@ The project is about getting information for all [**Extended Rights**](https://l
 	* _rightsGuid_ (main GUID of the _extended right_);
 6. The all that we need is to find all attributes in _appliesTo_ and also find all values from multimap where key equal to _rightsGuid_ (this would be displayed under "Consists Of");
 
+# How to find type
+There is _validAccesses_ attribute for every "control access right". So, for _extended right_ the value will be _256_, for _property set_ the value will be _48_ and for _validated write_ it will be 8.
+
+# UNKNOWN Property Sets
+There are at least three _unknown_ property sets. I found it by checking _attributeSecurityGUID_ on all attributes from _Schema_ namespace. So, for these three _unknown property sets_ I do not have any names or information about _appliesTo_. All the info marked as _UNKNOWN_ in output.
+
 # Code optimizations
 It is possible to optimize the code by gathering all _extended rigths_ first and then create a LDAP filter with only necessary GUIDs for schema attributes. But I have not done this just becase in the present state my code is easier to understand, IMHO.
 
@@ -27,12 +33,14 @@ It is possible to optimize the code by gathering all _extended rigths_ first and
 ```console
 =================================
 GUID: ab721a52-1e2f-11d0-9819-00aa0040529b
+Type: Extended Right
 Name: Domain-Administer-Server
 Display Name: Domain Administer Server
 Applies To:
 	bf967aad-0de6-11d0-a285-00aa003049e2 (samServer, Sam-Server)
 =================================
 GUID: ab721a53-1e2f-11d0-9819-00aa0040529b
+Type: Extended Right
 Name: User-Change-Password
 Display Name: Change Password
 Applies To:
@@ -42,6 +50,7 @@ Applies To:
 	bf967aba-0de6-11d0-a285-00aa003049e2 (user, User)
 =================================
 GUID: 00299570-246d-11d0-a768-00aa006e0529
+Type: Extended Right
 Name: User-Force-Change-Password
 Display Name: Reset Password
 Applies To:
@@ -51,6 +60,7 @@ Applies To:
 	bf967aba-0de6-11d0-a285-00aa003049e2 (user, User)
 =================================
 GUID: ab721a54-1e2f-11d0-9819-00aa0040529b
+Type: Extended Right
 Name: Send-As
 Display Name: Send As
 Applies To:
@@ -61,6 +71,7 @@ Applies To:
 	bf967aba-0de6-11d0-a285-00aa003049e2 (user, User)
 =================================
 GUID: ab721a56-1e2f-11d0-9819-00aa0040529b
+Type: Extended Right
 Name: Receive-As
 Display Name: Receive As
 Applies To:
@@ -71,12 +82,415 @@ Applies To:
 	bf967aba-0de6-11d0-a285-00aa003049e2 (user, User)
 =================================
 GUID: ab721a55-1e2f-11d0-9819-00aa0040529b
+Type: Extended Right
 Name: Send-To
 Display Name: Send To
 Applies To:
 	bf967a9c-0de6-11d0-a285-00aa003049e2 (group, Group)
 =================================
+GUID: a1990816-4298-11d1-ade2-00c04fd8d5cd
+Type: Extended Right
+Name: Open-Address-Book
+Display Name: Open Address List
+Applies To:
+	3e74f60f-3e73-11d1-a9c0-0000f80367c1 (addressBookContainer, Address-Book-Container)
+=================================
+GUID: 1131f6aa-9c07-11d1-f79f-00c04fc2dcd2
+Type: Extended Right
+Name: DS-Replication-Get-Changes
+Display Name: Replicating Directory Changes
+Applies To:
+	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
+	bf967a87-0de6-11d0-a285-00aa003049e2 (configuration, Configuration)
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: 1131f6ab-9c07-11d1-f79f-00c04fc2dcd2
+Type: Extended Right
+Name: DS-Replication-Synchronize
+Display Name: Replication Synchronization
+Applies To:
+	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
+	bf967a87-0de6-11d0-a285-00aa003049e2 (configuration, Configuration)
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: 1131f6ac-9c07-11d1-f79f-00c04fc2dcd2
+Type: Extended Right
+Name: DS-Replication-Manage-Topology
+Display Name: Manage Replication Topology
+Applies To:
+	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
+	bf967a87-0de6-11d0-a285-00aa003049e2 (configuration, Configuration)
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: e12b56b6-0a95-11d1-adbb-00c04fd8d5cd
+Type: Extended Right
+Name: Change-Schema-Master
+Display Name: Change Schema Master
+Applies To:
+	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
+=================================
+GUID: d58d5f36-0a98-11d1-adbb-00c04fd8d5cd
+Type: Extended Right
+Name: Change-Rid-Master
+Display Name: Change Rid Master
+Applies To:
+	6617188d-8f3c-11d0-afda-00c04fd930c9 (rIDManager, RID-Manager)
+=================================
+GUID: fec364e0-0a98-11d1-adbb-00c04fd8d5cd
+Type: Extended Right
+Name: Do-Garbage-Collection
+Display Name: Do Garbage Collection
+Applies To:
+	f0f8ffab-1191-11d0-a060-00aa006c33ed (nTDSDSA, NTDS-DSA)
+=================================
+GUID: 0bc1554e-0a99-11d1-adbb-00c04fd8d5cd
+Type: Extended Right
+Name: Recalculate-Hierarchy
+Display Name: Recalculate Hierarchy
+Applies To:
+	f0f8ffab-1191-11d0-a060-00aa006c33ed (nTDSDSA, NTDS-DSA)
+=================================
+GUID: 1abd7cf8-0a99-11d1-adbb-00c04fd8d5cd
+Type: Extended Right
+Name: Allocate-Rids
+Display Name: Allocate Rids
+Applies To:
+	f0f8ffab-1191-11d0-a060-00aa006c33ed (nTDSDSA, NTDS-DSA)
+=================================
+GUID: bae50096-4752-11d1-9052-00c04fc2d4cf
+Type: Extended Right
+Name: Change-PDC
+Display Name: Change PDC
+Applies To:
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: 440820ad-65b4-11d1-a3da-0000f875ae0d
+Type: Extended Right
+Name: Add-GUID
+Display Name: Add GUID
+Applies To:
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: 014bf69c-7b3b-11d1-85f6-08002be74fab
+Type: Extended Right
+Name: Change-Domain-Master
+Display Name: Change Domain Master
+Applies To:
+	ef9e60e0-56f7-11d1-a9c6-0000f80367c1 (crossRefContainer, Cross-Ref-Container)
+=================================
+GUID: 4b6e08c0-df3c-11d1-9c86-006008764d0e
+Type: Extended Right
+Name: msmq-Receive-Dead-Letter
+Display Name: Receive Dead Letter
+Applies To:
+	9a0dc344-c100-11d1-bbc5-0080c76670c0 (mSMQConfiguration, MSMQ-Configuration)
+=================================
+GUID: 4b6e08c1-df3c-11d1-9c86-006008764d0e
+Type: Extended Right
+Name: msmq-Peek-Dead-Letter
+Display Name: Peek Dead Letter
+Applies To:
+	9a0dc344-c100-11d1-bbc5-0080c76670c0 (mSMQConfiguration, MSMQ-Configuration)
+=================================
+GUID: 4b6e08c2-df3c-11d1-9c86-006008764d0e
+Type: Extended Right
+Name: msmq-Receive-computer-Journal
+Display Name: Receive Computer Journal
+Applies To:
+	9a0dc344-c100-11d1-bbc5-0080c76670c0 (mSMQConfiguration, MSMQ-Configuration)
+=================================
+GUID: 4b6e08c3-df3c-11d1-9c86-006008764d0e
+Type: Extended Right
+Name: msmq-Peek-computer-Journal
+Display Name: Peek Computer Journal
+Applies To:
+	9a0dc344-c100-11d1-bbc5-0080c76670c0 (mSMQConfiguration, MSMQ-Configuration)
+=================================
+GUID: 06bd3200-df3e-11d1-9c86-006008764d0e
+Type: Extended Right
+Name: msmq-Receive
+Display Name: Receive Message
+Applies To:
+	9a0dc343-c100-11d1-bbc5-0080c76670c0 (mSMQQueue, MSMQ-Queue)
+=================================
+GUID: 06bd3201-df3e-11d1-9c86-006008764d0e
+Type: Extended Right
+Name: msmq-Peek
+Display Name: Peek Message
+Applies To:
+	9a0dc343-c100-11d1-bbc5-0080c76670c0 (mSMQQueue, MSMQ-Queue)
+=================================
+GUID: 06bd3202-df3e-11d1-9c86-006008764d0e
+Type: Extended Right
+Name: msmq-Send
+Display Name: Send Message
+Applies To:
+	46b27aac-aafa-4ffb-b773-e5bf621ee87b (msMQ-Group, MSMQ-Group)
+	9a0dc343-c100-11d1-bbc5-0080c76670c0 (mSMQQueue, MSMQ-Queue)
+=================================
+GUID: 06bd3203-df3e-11d1-9c86-006008764d0e
+Type: Extended Right
+Name: msmq-Receive-journal
+Display Name: Receive Journal
+Applies To:
+	9a0dc343-c100-11d1-bbc5-0080c76670c0 (mSMQQueue, MSMQ-Queue)
+=================================
+GUID: b4e60130-df3f-11d1-9c86-006008764d0e
+Type: Extended Right
+Name: msmq-Open-Connector
+Display Name: Open Connector Queue
+Applies To:
+	bf967ab3-0de6-11d0-a285-00aa003049e2 (site, Site)
+=================================
+GUID: edacfd8f-ffb3-11d1-b41d-00a0c968f939
+Type: Extended Right
+Name: Apply-Group-Policy
+Display Name: Apply Group Policy
+Applies To:
+	f30e3bc2-9ff0-11d1-b603-0000f80367c1 (groupPolicyContainer, Group-Policy-Container)
+=================================
+GUID: 9923a32a-3607-11d2-b9be-0000f87a36b2
+Type: Extended Right
+Name: DS-Install-Replica
+Display Name: Add/Remove Replica In Domain
+Applies To:
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: cc17b1fb-33d9-11d2-97d4-00c04fd8d5cd
+Type: Extended Right
+Name: Change-Infrastructure-Master
+Display Name: Change Infrastructure Master
+Applies To:
+	2df90d89-009f-11d2-aa4c-00c04fd7d83a (infrastructureUpdate, Infrastructure-Update)
+=================================
+GUID: be2bb760-7f46-11d2-b9ad-00c04f79f805
+Type: Extended Right
+Name: Update-Schema-Cache
+Display Name: Update Schema Cache
+Applies To:
+	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
+=================================
+GUID: 62dd28a8-7f46-11d2-b9ad-00c04f79f805
+Type: Extended Right
+Name: Recalculate-Security-Inheritance
+Display Name: Recalculate Security Inheritance
+Applies To:
+	f0f8ffab-1191-11d0-a060-00aa006c33ed (nTDSDSA, NTDS-DSA)
+=================================
+GUID: 69ae6200-7f46-11d2-b9ad-00c04f79f805
+Type: Extended Right
+Name: DS-Check-Stale-Phantoms
+Display Name: Check Stale Phantoms
+Applies To:
+	f0f8ffab-1191-11d0-a060-00aa006c33ed (nTDSDSA, NTDS-DSA)
+=================================
+GUID: 0e10c968-78fb-11d2-90d4-00c04f79dc55
+Type: Extended Right
+Name: Certificate-Enrollment
+Display Name: Enroll
+Applies To:
+	e5209ca2-3bba-11d2-90cc-00c04fd91ab1 (pKICertificateTemplate, PKI-Certificate-Template)
+=================================
+GUID: b7b1b3dd-ab09-4242-9e30-9980e5d322f7
+Type: Extended Right
+Name: Generate-RSoP-Planning
+Display Name: Generate Resultant Set of Policy (Planning)
+Applies To:
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+	bf967aa5-0de6-11d0-a285-00aa003049e2 (organizationalUnit, Organizational-Unit)
+=================================
+GUID: 9432c620-033c-4db7-8b58-14ef6d0bf477
+Type: Extended Right
+Name: Refresh-Group-Cache
+Display Name: Refresh Group Cache for Logons
+Applies To:
+	f0f8ffab-1191-11d0-a060-00aa006c33ed (nTDSDSA, NTDS-DSA)
+=================================
+GUID: 91d67418-0135-4acc-8d79-c08e857cfbec
+Type: Extended Right
+Name: SAM-Enumerate-Entire-Domain
+Display Name: Enumerate Entire SAM Domain
+Applies To:
+	bf967aad-0de6-11d0-a285-00aa003049e2 (samServer, Sam-Server)
+=================================
+GUID: b7b1b3de-ab09-4242-9e30-9980e5d322f7
+Type: Extended Right
+Name: Generate-RSoP-Logging
+Display Name: Generate Resultant Set of Policy (Logging)
+Applies To:
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+	bf967aa5-0de6-11d0-a285-00aa003049e2 (organizationalUnit, Organizational-Unit)
+=================================
+GUID: e2a36dc9-ae17-47c3-b58b-be34c55ba633
+Type: Extended Right
+Name: Create-Inbound-Forest-Trust
+Display Name: Create Inbound Forest Trust
+Applies To:
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: 1131f6ad-9c07-11d1-f79f-00c04fc2dcd2
+Type: Extended Right
+Name: DS-Replication-Get-Changes-All
+Display Name: Replicating Directory Changes All
+Applies To:
+	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
+	bf967a87-0de6-11d0-a285-00aa003049e2 (configuration, Configuration)
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: ba33815a-4f93-4c76-87f3-57574bff8109
+Type: Extended Right
+Name: Migrate-SID-History
+Display Name: Migrate SID History
+Applies To:
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: 45ec5156-db7e-47bb-b53f-dbeb2d03c40f
+Type: Extended Right
+Name: Reanimate-Tombstones
+Display Name: Reanimate Tombstones
+Applies To:
+	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
+	bf967a87-0de6-11d0-a285-00aa003049e2 (configuration, Configuration)
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: 68b1d179-0d15-4d4f-ab71-46152e79a7bc
+Type: Extended Right
+Name: Allowed-To-Authenticate
+Display Name: Allowed to Authenticate
+Applies To:
+	7b8b558a-93a5-4af7-adca-c017e67f1057 (msDS-GroupManagedServiceAccount, The group managed service account class is used to create an account which can be shared by different computers to run Windows services.)
+	4828cc14-1437-45bc-9b07-ad6f015e5f28 (inetOrgPerson, Represents people who are associated with an organization in some way.)
+	bf967aba-0de6-11d0-a285-00aa003049e2 (user, User)
+	ce206244-5827-4a86-ba1c-1c0c386c1b64 (msDS-ManagedServiceAccount, Service account class is used to create accounts that are used for running Windows services.)
+	bf967a86-0de6-11d0-a285-00aa003049e2 (computer, Computer)
+=================================
+GUID: 2f16c4a5-b98e-432c-952a-cb388ba33f2e
+Type: Extended Right
+Name: DS-Execute-Intentions-Script
+Display Name: Execute Forest Update Script
+Applies To:
+	ef9e60e0-56f7-11d1-a9c6-0000f80367c1 (crossRefContainer, Cross-Ref-Container)
+=================================
+GUID: f98340fb-7c5b-4cdb-a00b-2ebdfa115a96
+Type: Extended Right
+Name: DS-Replication-Monitor-Topology
+Display Name: Monitor Active Directory Replication
+Applies To:
+	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
+	bf967a87-0de6-11d0-a285-00aa003049e2 (configuration, Configuration)
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: 280f369c-67c7-438e-ae98-1d46f3c6f541
+Type: Extended Right
+Name: Update-Password-Not-Required-Bit
+Display Name: Update Password Not Required Bit
+Applies To:
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: ccc2dc7d-a6ad-4a7a-8846-c04e3cc53501
+Type: Extended Right
+Name: Unexpire-Password
+Display Name: Unexpire Password
+Applies To:
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: 05c74c5e-4deb-43b4-bd9f-86664c2a7fd5
+Type: Extended Right
+Name: Enable-Per-User-Reversibly-Encrypted-Password
+Display Name: Enable Per User Reversibly Encrypted Password
+Applies To:
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: 4ecc03fe-ffc0-4947-b630-eb672a8a9dbc
+Type: Extended Right
+Name: DS-Query-Self-Quota
+Display Name: Query Self Quota
+Applies To:
+	da83fc4f-076f-4aea-b4dc-8f4dab9b5993 (msDS-QuotaContainer, A special container that holds all quota specifications for the directory database.)
+=================================
+GUID: 1131f6ae-9c07-11d1-f79f-00c04fc2dcd2
+Type: Extended Right
+Name: Read-Only-Replication-Secret-Synchronization
+Display Name: Read Only Replication Secret Synchronization
+Applies To:
+	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
+	bf967a87-0de6-11d0-a285-00aa003049e2 (configuration, Configuration)
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: 1a60ea8d-58a6-4b20-bcdc-fb71eb8a9ff8
+Type: Extended Right
+Name: Reload-SSL-Certificate
+Display Name: Reload SSL/TLS Certificate
+Applies To:
+	f0f8ffab-1191-11d0-a060-00aa006c33ed (nTDSDSA, NTDS-DSA)
+=================================
+GUID: 89e95b76-444d-4c62-991a-0facbeda640c
+Type: Extended Right
+Name: DS-Replication-Get-Changes-In-Filtered-Set
+Display Name: Replicating Directory Changes In Filtered Set
+Applies To:
+	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
+	bf967a87-0de6-11d0-a285-00aa003049e2 (configuration, Configuration)
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: 7726b9d5-a4b4-4288-a6b2-dce952e80a7f
+Type: Extended Right
+Name: Run-Protect-Admin-Groups-Task
+Display Name: Run Protect Admin Groups Task
+Applies To:
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: 7c0e2a7c-a419-48e4-a995-10180aad54dd
+Type: Extended Right
+Name: Manage-Optional-Features
+Display Name: Manage Optional Features for Active Directory
+Applies To:
+	ef9e60e0-56f7-11d1-a9c6-0000f80367c1 (crossRefContainer, Cross-Ref-Container)
+=================================
+GUID: 3e0f7e18-2c7a-4c10-ba82-4d926db99a3e
+Type: Extended Right
+Name: DS-Clone-Domain-Controller
+Display Name: Allow a DC to create a clone of itself
+Applies To:
+	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+=================================
+GUID: a05b8cc2-17bc-4802-a710-e7c15ab866a2
+Type: Extended Right
+Name: Certificate-AutoEnrollment
+Display Name: AutoEnrollment
+Applies To:
+	e5209ca2-3bba-11d2-90cc-00c04fd91ab1 (pKICertificateTemplate, PKI-Certificate-Template)
+=================================
+GUID: 4125c71f-7fac-4ff0-bcb7-f09a41325286
+Type: Extended Right
+Name: DS-Set-Owner
+Display Name: Set Owner of an object during creation.
+Applies To:
+	26f11b08-a29d-4869-99bb-ef0b99fd883e (UNKNOWN GUID)
+=================================
+GUID: 88a9933e-e5c8-4f2a-9dd7-2527416b8092
+Type: Extended Right
+Name: DS-Bypass-Quota
+Display Name: Bypass the quota restrictions during creation.
+Applies To:
+	26f11b08-a29d-4869-99bb-ef0b99fd883e (UNKNOWN GUID)
+=================================
+GUID: 084c93a2-620d-4879-a836-f0ae47de0e89
+Type: Extended Right
+Name: DS-Read-Partition-Secrets
+Display Name: Read secret attributes of objects in a Partition.
+Applies To:
+	26f11b08-a29d-4869-99bb-ef0b99fd883e (UNKNOWN GUID)
+=================================
+GUID: 94825a8d-b171-4116-8146-1e34d8f54401
+Type: Extended Right
+Name: DS-Write-Partition-Secrets
+Display Name: Write secret attributes of objects in a Partition.
+Applies To:
+	26f11b08-a29d-4869-99bb-ef0b99fd883e (UNKNOWN GUID)
+=================================
 GUID: c7407360-20bf-11d0-a768-00aa006e0529
+Type: Property Set
 Name: Domain-Password
 Display Name: Domain Password & Lockout Policies
 Applies To:
@@ -93,6 +507,7 @@ Consists Of:
 	bf967a0b-0de6-11d0-a285-00aa003049e2 (pwdProperties, Pwd-Properties)
 =================================
 GUID: 59ba2f42-79a2-11d0-9020-00c04fc2d3cf
+Type: Property Set
 Name: General-Information
 Display Name: General Information
 Applies To:
@@ -114,6 +529,7 @@ Consists Of:
 	bf967a6a-0de6-11d0-a285-00aa003049e2 (comment, User-Comment)
 =================================
 GUID: 4c164200-20c0-11d0-a768-00aa006e0529
+Type: Property Set
 Name: User-Account-Restrictions
 Display Name: Account Restrictions
 Applies To:
@@ -132,6 +548,7 @@ Consists Of:
 	3f78c3e5-f79a-46bd-a0b8-9d18116ddc79 (msDS-AllowedToActOnBehalfOfOtherIdentity, This attribute is used for access checks to determine if a requestor has permission to act on the behalf of other identities to services running as this account.)
 =================================
 GUID: 5f202010-79a5-11d0-9020-00c04fc2d4cf
+Type: Property Set
 Name: User-Logon
 Display Name: Logon Information
 Applies To:
@@ -152,6 +569,7 @@ Consists Of:
 	bf9679d7-0de6-11d0-a285-00aa003049e2 (userWorkstations, User-Workstations)
 =================================
 GUID: bc0ac240-79a9-11d0-9020-00c04fc2d4cf
+Type: Property Set
 Name: Membership
 Display Name: Group Membership
 Applies To:
@@ -161,13 +579,8 @@ Consists Of:
 	bf967991-0de6-11d0-a285-00aa003049e2 (memberOf, Is-Member-Of-DL)
 	bf9679c0-0de6-11d0-a285-00aa003049e2 (member, Member)
 =================================
-GUID: a1990816-4298-11d1-ade2-00c04fd8d5cd
-Name: Open-Address-Book
-Display Name: Open Address List
-Applies To:
-	3e74f60f-3e73-11d1-a9c0-0000f80367c1 (addressBookContainer, Address-Book-Container)
-=================================
 GUID: 77b5b886-944a-11d1-aebd-0000f80367c1
+Type: Property Set
 Name: Personal-Information
 Display Name: Personal Information
 Applies To:
@@ -252,6 +665,7 @@ Consists Of:
 	bd29bf90-66ad-40e1-887b-10df070419a6 (msDS-ExternalDirectoryObjectId, ms-DS-External-Directory-Object-Id)
 =================================
 GUID: e45795b2-9455-11d1-aebd-0000f80367c1
+Type: Property Set
 Name: Email-Information
 Display Name: Phone and Mail Options
 Applies To:
@@ -260,6 +674,7 @@ Applies To:
 	bf967aba-0de6-11d0-a285-00aa003049e2 (user, User)
 =================================
 GUID: e45795b3-9455-11d1-aebd-0000f80367c1
+Type: Property Set
 Name: Web-Information
 Display Name: Web Information
 Applies To:
@@ -270,79 +685,8 @@ Consists Of:
 	bf967a7a-0de6-11d0-a285-00aa003049e2 (wWWHomePage, WWW-Home-Page)
 	9a9a0221-4a5b-11d1-a9c3-0000f80367c1 (url, WWW-Page-Other)
 =================================
-GUID: 1131f6aa-9c07-11d1-f79f-00c04fc2dcd2
-Name: DS-Replication-Get-Changes
-Display Name: Replicating Directory Changes
-Applies To:
-	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
-	bf967a87-0de6-11d0-a285-00aa003049e2 (configuration, Configuration)
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
-=================================
-GUID: 1131f6ab-9c07-11d1-f79f-00c04fc2dcd2
-Name: DS-Replication-Synchronize
-Display Name: Replication Synchronization
-Applies To:
-	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
-	bf967a87-0de6-11d0-a285-00aa003049e2 (configuration, Configuration)
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
-=================================
-GUID: 1131f6ac-9c07-11d1-f79f-00c04fc2dcd2
-Name: DS-Replication-Manage-Topology
-Display Name: Manage Replication Topology
-Applies To:
-	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
-	bf967a87-0de6-11d0-a285-00aa003049e2 (configuration, Configuration)
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
-=================================
-GUID: e12b56b6-0a95-11d1-adbb-00c04fd8d5cd
-Name: Change-Schema-Master
-Display Name: Change Schema Master
-Applies To:
-	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
-=================================
-GUID: d58d5f36-0a98-11d1-adbb-00c04fd8d5cd
-Name: Change-Rid-Master
-Display Name: Change Rid Master
-Applies To:
-	6617188d-8f3c-11d0-afda-00c04fd930c9 (rIDManager, RID-Manager)
-=================================
-GUID: fec364e0-0a98-11d1-adbb-00c04fd8d5cd
-Name: Do-Garbage-Collection
-Display Name: Do Garbage Collection
-Applies To:
-	f0f8ffab-1191-11d0-a060-00aa006c33ed (nTDSDSA, NTDS-DSA)
-=================================
-GUID: 0bc1554e-0a99-11d1-adbb-00c04fd8d5cd
-Name: Recalculate-Hierarchy
-Display Name: Recalculate Hierarchy
-Applies To:
-	f0f8ffab-1191-11d0-a060-00aa006c33ed (nTDSDSA, NTDS-DSA)
-=================================
-GUID: 1abd7cf8-0a99-11d1-adbb-00c04fd8d5cd
-Name: Allocate-Rids
-Display Name: Allocate Rids
-Applies To:
-	f0f8ffab-1191-11d0-a060-00aa006c33ed (nTDSDSA, NTDS-DSA)
-=================================
-GUID: bae50096-4752-11d1-9052-00c04fc2d4cf
-Name: Change-PDC
-Display Name: Change PDC
-Applies To:
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
-=================================
-GUID: 440820ad-65b4-11d1-a3da-0000f875ae0d
-Name: Add-GUID
-Display Name: Add GUID
-Applies To:
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
-=================================
-GUID: 014bf69c-7b3b-11d1-85f6-08002be74fab
-Name: Change-Domain-Master
-Display Name: Change Domain Master
-Applies To:
-	ef9e60e0-56f7-11d1-a9c6-0000f80367c1 (crossRefContainer, Cross-Ref-Container)
-=================================
 GUID: e48d0154-bcf8-11d1-8702-00c04fb96050
+Type: Property Set
 Name: Public-Information
 Display Name: Public Information
 Applies To:
@@ -397,68 +741,8 @@ Consists Of:
 	bf967a55-0de6-11d0-a285-00aa003049e2 (title, Title)
 	28630ebb-41d5-11d1-a9c1-0000f80367c1 (userPrincipalName, User-Principal-Name)
 =================================
-GUID: 4b6e08c0-df3c-11d1-9c86-006008764d0e
-Name: msmq-Receive-Dead-Letter
-Display Name: Receive Dead Letter
-Applies To:
-	9a0dc344-c100-11d1-bbc5-0080c76670c0 (mSMQConfiguration, MSMQ-Configuration)
-=================================
-GUID: 4b6e08c1-df3c-11d1-9c86-006008764d0e
-Name: msmq-Peek-Dead-Letter
-Display Name: Peek Dead Letter
-Applies To:
-	9a0dc344-c100-11d1-bbc5-0080c76670c0 (mSMQConfiguration, MSMQ-Configuration)
-=================================
-GUID: 4b6e08c2-df3c-11d1-9c86-006008764d0e
-Name: msmq-Receive-computer-Journal
-Display Name: Receive Computer Journal
-Applies To:
-	9a0dc344-c100-11d1-bbc5-0080c76670c0 (mSMQConfiguration, MSMQ-Configuration)
-=================================
-GUID: 4b6e08c3-df3c-11d1-9c86-006008764d0e
-Name: msmq-Peek-computer-Journal
-Display Name: Peek Computer Journal
-Applies To:
-	9a0dc344-c100-11d1-bbc5-0080c76670c0 (mSMQConfiguration, MSMQ-Configuration)
-=================================
-GUID: 06bd3200-df3e-11d1-9c86-006008764d0e
-Name: msmq-Receive
-Display Name: Receive Message
-Applies To:
-	9a0dc343-c100-11d1-bbc5-0080c76670c0 (mSMQQueue, MSMQ-Queue)
-=================================
-GUID: 06bd3201-df3e-11d1-9c86-006008764d0e
-Name: msmq-Peek
-Display Name: Peek Message
-Applies To:
-	9a0dc343-c100-11d1-bbc5-0080c76670c0 (mSMQQueue, MSMQ-Queue)
-=================================
-GUID: 06bd3202-df3e-11d1-9c86-006008764d0e
-Name: msmq-Send
-Display Name: Send Message
-Applies To:
-	46b27aac-aafa-4ffb-b773-e5bf621ee87b (msMQ-Group, MSMQ-Group)
-	9a0dc343-c100-11d1-bbc5-0080c76670c0 (mSMQQueue, MSMQ-Queue)
-=================================
-GUID: 06bd3203-df3e-11d1-9c86-006008764d0e
-Name: msmq-Receive-journal
-Display Name: Receive Journal
-Applies To:
-	9a0dc343-c100-11d1-bbc5-0080c76670c0 (mSMQQueue, MSMQ-Queue)
-=================================
-GUID: b4e60130-df3f-11d1-9c86-006008764d0e
-Name: msmq-Open-Connector
-Display Name: Open Connector Queue
-Applies To:
-	bf967ab3-0de6-11d0-a285-00aa003049e2 (site, Site)
-=================================
-GUID: edacfd8f-ffb3-11d1-b41d-00a0c968f939
-Name: Apply-Group-Policy
-Display Name: Apply Group Policy
-Applies To:
-	f30e3bc2-9ff0-11d1-b603-0000f80367c1 (groupPolicyContainer, Group-Policy-Container)
-=================================
 GUID: 037088f8-0ae1-11d2-b422-00a0c968f939
+Type: Property Set
 Name: RAS-Information
 Display Name: Remote Access Information
 Applies To:
@@ -478,94 +762,8 @@ Consists Of:
 	46a9b11d-60ae-405a-b7e8-ff8a58d456d2 (tokenGroupsGlobalAndUniversal, Token-Groups-Global-And-Universal)
 	040fc392-33df-11d2-98b2-0000f87a57d4 (tokenGroupsNoGCAcceptable, Token-Groups-No-GC-Acceptable)
 =================================
-GUID: 9923a32a-3607-11d2-b9be-0000f87a36b2
-Name: DS-Install-Replica
-Display Name: Add/Remove Replica In Domain
-Applies To:
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
-=================================
-GUID: cc17b1fb-33d9-11d2-97d4-00c04fd8d5cd
-Name: Change-Infrastructure-Master
-Display Name: Change Infrastructure Master
-Applies To:
-	2df90d89-009f-11d2-aa4c-00c04fd7d83a (infrastructureUpdate, Infrastructure-Update)
-=================================
-GUID: be2bb760-7f46-11d2-b9ad-00c04f79f805
-Name: Update-Schema-Cache
-Display Name: Update Schema Cache
-Applies To:
-	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
-=================================
-GUID: 62dd28a8-7f46-11d2-b9ad-00c04f79f805
-Name: Recalculate-Security-Inheritance
-Display Name: Recalculate Security Inheritance
-Applies To:
-	f0f8ffab-1191-11d0-a060-00aa006c33ed (nTDSDSA, NTDS-DSA)
-=================================
-GUID: 69ae6200-7f46-11d2-b9ad-00c04f79f805
-Name: DS-Check-Stale-Phantoms
-Display Name: Check Stale Phantoms
-Applies To:
-	f0f8ffab-1191-11d0-a060-00aa006c33ed (nTDSDSA, NTDS-DSA)
-=================================
-GUID: 0e10c968-78fb-11d2-90d4-00c04f79dc55
-Name: Certificate-Enrollment
-Display Name: Enroll
-Applies To:
-	e5209ca2-3bba-11d2-90cc-00c04fd91ab1 (pKICertificateTemplate, PKI-Certificate-Template)
-=================================
-GUID: bf9679c0-0de6-11d0-a285-00aa003049e2
-Name: Self-Membership
-Display Name: Add/Remove self as member
-Applies To:
-	bf967a9c-0de6-11d0-a285-00aa003049e2 (group, Group)
-=================================
-GUID: 72e39547-7b18-11d1-adef-00c04fd8d5cd
-Name: Validated-DNS-Host-Name
-Display Name: Validated write to DNS host name
-Applies To:
-	7b8b558a-93a5-4af7-adca-c017e67f1057 (msDS-GroupManagedServiceAccount, The group managed service account class is used to create an account which can be shared by different computers to run Windows services.)
-	ce206244-5827-4a86-ba1c-1c0c386c1b64 (msDS-ManagedServiceAccount, Service account class is used to create accounts that are used for running Windows services.)
-	bf967a86-0de6-11d0-a285-00aa003049e2 (computer, Computer)
-Consists Of:
-	72e39547-7b18-11d1-adef-00c04fd8d5cd (dNSHostName, DNS-Host-Name)
-	80863791-dbe9-4eb8-837e-7f0ab55d9ac7 (msDS-AdditionalDnsHostName, ms-DS-Additional-Dns-Host-Name)
-=================================
-GUID: f3a64788-5306-11d1-a9c5-0000f80367c1
-Name: Validated-SPN
-Display Name: Validated write to service principal name
-Applies To:
-	7b8b558a-93a5-4af7-adca-c017e67f1057 (msDS-GroupManagedServiceAccount, The group managed service account class is used to create an account which can be shared by different computers to run Windows services.)
-	ce206244-5827-4a86-ba1c-1c0c386c1b64 (msDS-ManagedServiceAccount, Service account class is used to create accounts that are used for running Windows services.)
-	bf967a86-0de6-11d0-a285-00aa003049e2 (computer, Computer)
-=================================
-GUID: b7b1b3dd-ab09-4242-9e30-9980e5d322f7
-Name: Generate-RSoP-Planning
-Display Name: Generate Resultant Set of Policy (Planning)
-Applies To:
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
-	bf967aa5-0de6-11d0-a285-00aa003049e2 (organizationalUnit, Organizational-Unit)
-=================================
-GUID: 9432c620-033c-4db7-8b58-14ef6d0bf477
-Name: Refresh-Group-Cache
-Display Name: Refresh Group Cache for Logons
-Applies To:
-	f0f8ffab-1191-11d0-a060-00aa006c33ed (nTDSDSA, NTDS-DSA)
-=================================
-GUID: 91d67418-0135-4acc-8d79-c08e857cfbec
-Name: SAM-Enumerate-Entire-Domain
-Display Name: Enumerate Entire SAM Domain
-Applies To:
-	bf967aad-0de6-11d0-a285-00aa003049e2 (samServer, Sam-Server)
-=================================
-GUID: b7b1b3de-ab09-4242-9e30-9980e5d322f7
-Name: Generate-RSoP-Logging
-Display Name: Generate Resultant Set of Policy (Logging)
-Applies To:
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
-	bf967aa5-0de6-11d0-a285-00aa003049e2 (organizationalUnit, Organizational-Unit)
-=================================
 GUID: b8119fd0-04f6-4762-ab7a-4986c76b3f9a
+Type: Property Set
 Name: Domain-Other-Parameters
 Display Name: Other Domain Parameters (for use by SAM)
 Applies To:
@@ -580,6 +778,7 @@ Consists Of:
 	bf967a61-0de6-11d0-a285-00aa003049e2 (uASCompat, UAS-Compat)
 =================================
 GUID: 72e39547-7b18-11d1-adef-00c04fd8d5cd
+Type: Property Set
 Name: DNS-Host-Name-Attributes
 Display Name: DNS Host Name Attributes
 Applies To:
@@ -590,83 +789,8 @@ Consists Of:
 	72e39547-7b18-11d1-adef-00c04fd8d5cd (dNSHostName, DNS-Host-Name)
 	80863791-dbe9-4eb8-837e-7f0ab55d9ac7 (msDS-AdditionalDnsHostName, ms-DS-Additional-Dns-Host-Name)
 =================================
-GUID: e2a36dc9-ae17-47c3-b58b-be34c55ba633
-Name: Create-Inbound-Forest-Trust
-Display Name: Create Inbound Forest Trust
-Applies To:
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
-=================================
-GUID: 1131f6ad-9c07-11d1-f79f-00c04fc2dcd2
-Name: DS-Replication-Get-Changes-All
-Display Name: Replicating Directory Changes All
-Applies To:
-	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
-	bf967a87-0de6-11d0-a285-00aa003049e2 (configuration, Configuration)
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
-=================================
-GUID: ba33815a-4f93-4c76-87f3-57574bff8109
-Name: Migrate-SID-History
-Display Name: Migrate SID History
-Applies To:
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
-=================================
-GUID: 45ec5156-db7e-47bb-b53f-dbeb2d03c40f
-Name: Reanimate-Tombstones
-Display Name: Reanimate Tombstones
-Applies To:
-	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
-	bf967a87-0de6-11d0-a285-00aa003049e2 (configuration, Configuration)
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
-=================================
-GUID: 68b1d179-0d15-4d4f-ab71-46152e79a7bc
-Name: Allowed-To-Authenticate
-Display Name: Allowed to Authenticate
-Applies To:
-	7b8b558a-93a5-4af7-adca-c017e67f1057 (msDS-GroupManagedServiceAccount, The group managed service account class is used to create an account which can be shared by different computers to run Windows services.)
-	4828cc14-1437-45bc-9b07-ad6f015e5f28 (inetOrgPerson, Represents people who are associated with an organization in some way.)
-	bf967aba-0de6-11d0-a285-00aa003049e2 (user, User)
-	ce206244-5827-4a86-ba1c-1c0c386c1b64 (msDS-ManagedServiceAccount, Service account class is used to create accounts that are used for running Windows services.)
-	bf967a86-0de6-11d0-a285-00aa003049e2 (computer, Computer)
-=================================
-GUID: 2f16c4a5-b98e-432c-952a-cb388ba33f2e
-Name: DS-Execute-Intentions-Script
-Display Name: Execute Forest Update Script
-Applies To:
-	ef9e60e0-56f7-11d1-a9c6-0000f80367c1 (crossRefContainer, Cross-Ref-Container)
-=================================
-GUID: f98340fb-7c5b-4cdb-a00b-2ebdfa115a96
-Name: DS-Replication-Monitor-Topology
-Display Name: Monitor Active Directory Replication
-Applies To:
-	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
-	bf967a87-0de6-11d0-a285-00aa003049e2 (configuration, Configuration)
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
-=================================
-GUID: 280f369c-67c7-438e-ae98-1d46f3c6f541
-Name: Update-Password-Not-Required-Bit
-Display Name: Update Password Not Required Bit
-Applies To:
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
-=================================
-GUID: ccc2dc7d-a6ad-4a7a-8846-c04e3cc53501
-Name: Unexpire-Password
-Display Name: Unexpire Password
-Applies To:
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
-=================================
-GUID: 05c74c5e-4deb-43b4-bd9f-86664c2a7fd5
-Name: Enable-Per-User-Reversibly-Encrypted-Password
-Display Name: Enable Per User Reversibly Encrypted Password
-Applies To:
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
-=================================
-GUID: 4ecc03fe-ffc0-4947-b630-eb672a8a9dbc
-Name: DS-Query-Self-Quota
-Display Name: Query Self Quota
-Applies To:
-	da83fc4f-076f-4aea-b4dc-8f4dab9b5993 (msDS-QuotaContainer, A special container that holds all quota specifications for the directory database.)
-=================================
 GUID: 91e647de-d96f-4b70-9557-d63ff4f3ccd8
+Type: Property Set
 Name: Private-Information
 Display Name: Private Information
 Applies To:
@@ -678,15 +802,8 @@ Consists Of:
 	b3f93023-9239-4f7c-b99c-6745d87adbc2 (msPKIDPAPIMasterKeys, Storage of encrypted DPAPI Master Keys for user)
 	b8dfa744-31dc-4ef1-ac7c-84baf7ef9da7 (msPKIAccountCredentials, Storage of encrypted user credential token blobs for roaming)
 =================================
-GUID: 1131f6ae-9c07-11d1-f79f-00c04fc2dcd2
-Name: Read-Only-Replication-Secret-Synchronization
-Display Name: Read Only Replication Secret Synchronization
-Applies To:
-	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
-	bf967a87-0de6-11d0-a285-00aa003049e2 (configuration, Configuration)
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
-=================================
 GUID: ffa6f046-ca4b-4feb-b40d-04dfee722543
+Type: Property Set
 Name: MS-TS-GatewayAccess
 Display Name: MS-TS-GatewayAccess
 Applies To:
@@ -695,6 +812,7 @@ Applies To:
 	bf967a86-0de6-11d0-a285-00aa003049e2 (computer, Computer)
 =================================
 GUID: 5805bc62-bdc9-4428-a5e2-856a0f4c185e
+Type: Property Set
 Name: Terminal-Server-License-Server
 Display Name: Terminal Server License Server
 Applies To:
@@ -715,81 +833,84 @@ Consists Of:
 	fad5dcc1-2130-4c87-a118-75322cd67050 (msTSManagingLS3, Issuer name of the third TS per user CAL.)
 	f7a3b6a0-2107-4140-b306-75cb521731e5 (msTSManagingLS4, Issuer name of the fourth TS per user CAL.)
 =================================
-GUID: 1a60ea8d-58a6-4b20-bcdc-fb71eb8a9ff8
-Name: Reload-SSL-Certificate
-Display Name: Reload SSL/TLS Certificate
-Applies To:
-	f0f8ffab-1191-11d0-a060-00aa006c33ed (nTDSDSA, NTDS-DSA)
+GUID: 9b026da6-0d3c-465c-8bee-5199d7165cba
+Type: Property Set
+Name: UNKNOWN
+Display Name: UNKNOWN
+Applies To:UNKNOWN
+Consists Of:
+	5b47d60f-6090-40b2-9f37-2a4de88f3063 (msDS-KeyCredentialLink, Contains key material and usage.)
 =================================
-GUID: 89e95b76-444d-4c62-991a-0facbeda640c
-Name: DS-Replication-Get-Changes-In-Filtered-Set
-Display Name: Replicating Directory Changes In Filtered Set
-Applies To:
-	bf967a8f-0de6-11d0-a285-00aa003049e2 (dMD, DMD)
-	bf967a87-0de6-11d0-a285-00aa003049e2 (configuration, Configuration)
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+GUID: a29b89fd-c7e8-11d0-9bae-00c04fd92ef5
+Type: Property Set
+Name: UNKNOWN
+Display Name: UNKNOWN
+Applies To:UNKNOWN
+Consists Of:
+	80a67e29-9f22-11d0-afdd-00c04fd930c9 (domainWidePolicy, Domain-Wide-Policy)
+	8e4eb2ec-4712-11d0-a1a0-00c04fd930c9 (eFSPolicy, EFSPolicy)
+	80a67e28-9f22-11d0-afdd-00c04fd930c9 (publicKeyPolicy, Public-Key-Policy)
 =================================
-GUID: 7726b9d5-a4b4-4288-a6b2-dce952e80a7f
-Name: Run-Protect-Admin-Groups-Task
-Display Name: Run Protect Admin Groups Task
-Applies To:
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+GUID: a29b89fe-c7e8-11d0-9bae-00c04fd92ef5
+Type: Property Set
+Name: UNKNOWN
+Display Name: UNKNOWN
+Applies To:UNKNOWN
+Consists Of:
+	80a67e2a-9f22-11d0-afdd-00c04fd930c9 (domainPolicyReference, Domain-Policy-Reference)
+	c9b6358e-bb38-11d0-afef-0000f80367c1 (machinePasswordChangeInterval, Machine-Password-Change-Interval)
 =================================
-GUID: 7c0e2a7c-a419-48e4-a995-10180aad54dd
-Name: Manage-Optional-Features
-Display Name: Manage Optional Features for Active Directory
-Applies To:
-	ef9e60e0-56f7-11d1-a9c6-0000f80367c1 (crossRefContainer, Cross-Ref-Container)
+GUID: a29b8a01-c7e8-11d0-9bae-00c04fd92ef5
+Type: Property Set
+Name: UNKNOWN
+Display Name: UNKNOWN
+Applies To:UNKNOWN
+Consists Of:
+	80a67e4d-9f22-11d0-afdd-00c04fd930c9 (localPolicyReference, Local-Policy-Reference)
+	80a67e4f-9f22-11d0-afdd-00c04fd930c9 (machineWidePolicy, Machine-Wide-Policy)
+	80a67e4e-9f22-11d0-afdd-00c04fd930c9 (qualityOfService, Quality-Of-Service)
 =================================
-GUID: 3e0f7e18-2c7a-4c10-ba82-4d926db99a3e
-Name: DS-Clone-Domain-Controller
-Display Name: Allow a DC to create a clone of itself
+GUID: bf9679c0-0de6-11d0-a285-00aa003049e2
+Type: Validated Write
+Name: Self-Membership
+Display Name: Add/Remove self as member
 Applies To:
-	19195a5b-6da0-11d0-afd3-00c04fd930c9 (domainDNS, Domain-DNS)
+	bf967a9c-0de6-11d0-a285-00aa003049e2 (group, Group)
+=================================
+GUID: 72e39547-7b18-11d1-adef-00c04fd8d5cd
+Type: Validated Write
+Name: Validated-DNS-Host-Name
+Display Name: Validated write to DNS host name
+Applies To:
+	7b8b558a-93a5-4af7-adca-c017e67f1057 (msDS-GroupManagedServiceAccount, The group managed service account class is used to create an account which can be shared by different computers to run Windows services.)
+	ce206244-5827-4a86-ba1c-1c0c386c1b64 (msDS-ManagedServiceAccount, Service account class is used to create accounts that are used for running Windows services.)
+	bf967a86-0de6-11d0-a285-00aa003049e2 (computer, Computer)
+=================================
+GUID: f3a64788-5306-11d1-a9c5-0000f80367c1
+Type: Validated Write
+Name: Validated-SPN
+Display Name: Validated write to service principal name
+Applies To:
+	7b8b558a-93a5-4af7-adca-c017e67f1057 (msDS-GroupManagedServiceAccount, The group managed service account class is used to create an account which can be shared by different computers to run Windows services.)
+	ce206244-5827-4a86-ba1c-1c0c386c1b64 (msDS-ManagedServiceAccount, Service account class is used to create accounts that are used for running Windows services.)
+	bf967a86-0de6-11d0-a285-00aa003049e2 (computer, Computer)
 =================================
 GUID: d31a8757-2447-4545-8081-3bb610cacbf2
+Type: Validated Write
 Name: Validated-MS-DS-Behavior-Version
 Display Name: Validated write to MS DS behavior version
 Applies To:
 	f0f8ffab-1191-11d0-a060-00aa006c33ed (nTDSDSA, NTDS-DSA)
 =================================
 GUID: 80863791-dbe9-4eb8-837e-7f0ab55d9ac7
+Type: Validated Write
 Name: Validated-MS-DS-Additional-DNS-Host-Name
 Display Name: Validated write to MS DS Additional DNS Host Name
 Applies To:
 	bf967a86-0de6-11d0-a285-00aa003049e2 (computer, Computer)
 =================================
-GUID: a05b8cc2-17bc-4802-a710-e7c15ab866a2
-Name: Certificate-AutoEnrollment
-Display Name: AutoEnrollment
-Applies To:
-	e5209ca2-3bba-11d2-90cc-00c04fd91ab1 (pKICertificateTemplate, PKI-Certificate-Template)
-=================================
-GUID: 4125c71f-7fac-4ff0-bcb7-f09a41325286
-Name: DS-Set-Owner
-Display Name: Set Owner of an object during creation.
-Applies To:
-	26f11b08-a29d-4869-99bb-ef0b99fd883e (UNKNOWN GUID)
-=================================
-GUID: 88a9933e-e5c8-4f2a-9dd7-2527416b8092
-Name: DS-Bypass-Quota
-Display Name: Bypass the quota restrictions during creation.
-Applies To:
-	26f11b08-a29d-4869-99bb-ef0b99fd883e (UNKNOWN GUID)
-=================================
-GUID: 084c93a2-620d-4879-a836-f0ae47de0e89
-Name: DS-Read-Partition-Secrets
-Display Name: Read secret attributes of objects in a Partition.
-Applies To:
-	26f11b08-a29d-4869-99bb-ef0b99fd883e (UNKNOWN GUID)
-=================================
-GUID: 94825a8d-b171-4116-8146-1e34d8f54401
-Name: DS-Write-Partition-Secrets
-Display Name: Write secret attributes of objects in a Partition.
-Applies To:
-	26f11b08-a29d-4869-99bb-ef0b99fd883e (UNKNOWN GUID)
-=================================
 GUID: 9b026da6-0d3c-465c-8bee-5199d7165cba
+Type: Validated Write
 Name: DS-Validated-Write-Computer
 Display Name: Validated write to computer attributes.
 Applies To:

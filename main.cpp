@@ -21,6 +21,7 @@ using _ldap_msgfree = decltype([](LDAPMessage* value){ ldap_msgfree(value); });
 using _ldap_memfree = decltype([](PWCHAR value){ ldap_memfreeW(value); });
 using _ldap_value_free = decltype([](PWCHAR* value){ ldap_value_freeW(value); });
 using _ldap_value_free_len = decltype([](berval** value){ ldap_value_free_len(value); });
+using _ldap_control_free = decltype([](LDAPControlW* value){ ldap_control_freeW(value); });
 
 struct _ldap_search_abandon_page
 {
@@ -86,6 +87,9 @@ void extendedRightsLDAP()
 	std::map<std::string, std::pair<std::string, std::string>> schemaAttributes;
 	std::multimap<std::string, std::string> securityGUIDToGUID;
 
+	std::vector<std::string> controlAccessRights;
+	std::vector<std::string> validatedWrites;
+
 	LDAP_TIMEVAL tm{ .tv_sec = 1000, .tv_usec = 1000 };
 	unsigned long pageSize = 100;
 	unsigned long pageTimeLimit = 100000;
@@ -95,13 +99,13 @@ void extendedRightsLDAP()
 
 	#pragma region Aux lambda
 	auto displaySchemaAttribute = [&schemaAttributes](std::string value)
-	{
-		auto guid_search = schemaAttributes.find(value);
-		if(guid_search != schemaAttributes.end())
-			std::cout << '\t' << value << " (" << (*guid_search).second.first << ", " << (*guid_search).second.second << ")" << std::endl;
-		else
-			std::cout << '\t' << value << " (UNKNOWN GUID)" << std::endl;
-	};
+		{
+			auto guid_search = schemaAttributes.find(value);
+			if(guid_search != schemaAttributes.end())
+				std::cout << '\t' << value << " (" << (*guid_search).second.first << ", " << (*guid_search).second.second << ")" << std::endl;
+			else
+				std::cout << '\t' << value << " (UNKNOWN GUID)" << std::endl;
+		};
 
 	auto error = [](std::string_view info){ std::cout << "Error: " << info << std::endl; };
 	#pragma endregion
@@ -277,14 +281,42 @@ void extendedRightsLDAP()
 	#pragma endregion
 
 	#pragma region Get information about all extended access rights from "Configuration" namespace
+	int count = 1;
+
 	{
+		#pragma region All the attributes we need
 		const wchar_t* configAttrs[] = {
 			L"name",
 			L"displayName",
 			L"appliesTo",
 			L"rightsGuid",
+			L"validAccesses",
 			nullptr
 		};
+		#pragma endregion
+
+		#pragma region Create server-side LDAP control with sort rule
+		LDAPSortKeyW key = {
+			.sk_attrtype = (PWCHAR)L"validAccesses",
+			.sk_matchruleoid = nullptr,
+			.sk_reverseorder = TRUE
+		};
+
+		LDAPSortKeyW* keys[2] = {
+			&key,
+			nullptr
+		};
+
+		std::unique_ptr<LDAPControlW, _ldap_control_free> control;
+
+		if(ldap_create_sort_controlW(ldap_handle.get(), keys, TRUE, std::out_ptr(control)))
+			throw std::exception("Cannot create sort control");
+
+		PLDAPControlW controls[2] = {
+			control.get(),
+			nullptr
+		};
+		#pragma endregion
 
 		std::unique_ptr<LDAPSearch, decltype(_ldap_search_abandon_page(ldap_handle.get()))> page_handle{
 			ldap_search_init_pageW(
@@ -294,7 +326,7 @@ void extendedRightsLDAP()
 				(PWSTR)L"rightsGuid=*",
 				(PZPWSTR)configAttrs,
 				0,
-				nullptr,
+				controls,
 				nullptr,
 				pageTimeLimit,
 				pageSize,
@@ -303,6 +335,9 @@ void extendedRightsLDAP()
 		};
 		if(nullptr == page_handle)
 			return error("Cannot get search page results (Configuration namespace)");
+
+		std::string currentValidAccesses = "";
+		std::string currentType = "";
 
 		do
 		{
@@ -323,6 +358,10 @@ void extendedRightsLDAP()
 				while(nullptr != search_entry)
 				{
 					#pragma region Get all necessary values
+					std::unique_ptr<berval* [], _ldap_value_free_len> validAccessesValues{ ldap_get_values_lenW(ldap_handle.get(), search_entry, (PWSTR)L"validAccesses") };
+					if(!validAccessesValues)
+						return error("Cannot get validAccessesValues");
+
 					std::unique_ptr<berval* [], _ldap_value_free_len> nameValues{ ldap_get_values_lenW(ldap_handle.get(), search_entry, (PWSTR)configAttrs[0]) };
 					if(!nameValues)
 						return error("Cannot get values for name");
@@ -344,8 +383,48 @@ void extendedRightsLDAP()
 					#pragma endregion
 
 					#pragma region Display information
+					if(currentValidAccesses != validAccessesValues[0]->bv_val)
+					{
+						#pragma region Need to append all unknown property sets
+						if(currentValidAccesses == "48")
+						{
+							std::string currentGUID = "";
+
+							for(auto&& element : securityGUIDToGUID)
+							{
+								if(element.first != currentGUID)
+								{
+									currentGUID = element.first;
+
+									std::cout << "=================================" << std::endl;
+									std::cout << "GUID: " << currentGUID << std::endl;
+									std::cout << "Type: " << currentType << std::endl;
+									std::cout << "Name: " << "UNKNOWN" << std::endl;
+									std::cout << "Display Name: " << "UNKNOWN" << std::endl;
+
+									std::cout << "Applies To:" << "UNKNOWN" << std::endl;
+
+									std::cout << "Consists Of:" << std::endl;
+								}
+
+								displaySchemaAttribute(element.second);
+							}
+						}
+						#pragma endregion
+
+						currentValidAccesses = validAccessesValues[0]->bv_val;
+
+						if(currentValidAccesses == "256")
+							currentType = "Extended Right";
+						if(currentValidAccesses == "48")
+							currentType = "Property Set";
+						if(currentValidAccesses == "8")
+							currentType = "Validated Write";
+					}
+
 					std::cout << "=================================" << std::endl;
 					std::cout << "GUID: " << guid_str << std::endl;
+					std::cout << "Type: " << currentType << std::endl;
 					std::cout << "Name: " << nameValues[0]->bv_val << std::endl;
 					std::cout << "Display Name: " << displayNameValues[0]->bv_val << std::endl;
 
@@ -360,6 +439,7 @@ void extendedRightsLDAP()
 						displaySchemaAttribute(applies_guid_str);
 					}
 
+
 					#pragma region Display "Consists Of" if needed
 					auto begin = securityGUIDToGUID.lower_bound(guid_str);
 					auto end = securityGUIDToGUID.upper_bound(guid_str);
@@ -370,6 +450,8 @@ void extendedRightsLDAP()
 
 						while(begin != end)
 							displaySchemaAttribute((*(begin++)).second);
+
+						securityGUIDToGUID.erase(securityGUIDToGUID.lower_bound(guid_str), securityGUIDToGUID.upper_bound(guid_str));
 					}
 					#pragma endregion
 					#pragma endregion
