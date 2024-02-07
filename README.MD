@@ -21,7 +21,7 @@ The project is about getting information for all [**Extended Rights**](https://l
 There is _validAccesses_ attribute for every "control access right". So, for _extended right_ the value will be _256_, for _property set_ the value will be _48_ and for _validated write_ it will be 8.
 
 # UNKNOWN Property Sets
-There are at least three _unknown_ property sets. I found it by checking _attributeSecurityGUID_ on all attributes from _Schema_ namespace. So, for these three _unknown property sets_ I do not have any names or information about _appliesTo_. All the info marked as _UNKNOWN_ in output.
+There are at least four _unknown_ property sets. I found it by checking _attributeSecurityGUID_ on all attributes from _Schema_ namespace. So, for these three _unknown property sets_ I do not have any names or information about _appliesTo_. All the info marked as _UNKNOWN_ in output.
 
 # Code optimizations
 It is possible to optimize the code by gathering all _extended rigths_ first and then create a LDAP filter with only necessary GUIDs for schema attributes. But I have not done this just becase in the present state my code is easier to understand, IMHO.
