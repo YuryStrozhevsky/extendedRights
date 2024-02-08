@@ -302,18 +302,8 @@ void extendedRightsLDAP()
 			.sk_reverseorder = TRUE
 		};
 
-		LDAPSortKeyW* keys[2] = {
+		LDAPSortKeyW* keys[] = {
 			&key,
-			nullptr
-		};
-
-		std::unique_ptr<LDAPControlW, _ldap_control_free> control;
-
-		if(ldap_create_sort_controlW(ldap_handle.get(), keys, TRUE, std::out_ptr(control)))
-			throw std::exception("Cannot create sort control");
-
-		PLDAPControlW controls[2] = {
-			control.get(),
 			nullptr
 		};
 		#pragma endregion
@@ -326,11 +316,11 @@ void extendedRightsLDAP()
 				(PWSTR)L"rightsGuid=*",
 				(PZPWSTR)configAttrs,
 				0,
-				controls,
+				nullptr,
 				nullptr,
 				pageTimeLimit,
 				pageSize,
-				nullptr
+				keys
 			)
 		};
 		if(nullptr == page_handle)
