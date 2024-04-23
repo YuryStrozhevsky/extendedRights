@@ -120,7 +120,7 @@ void extendedRightsLDAP()
 	#pragma endregion
 
 	#pragma region Initialize TLS connection with LDAP server
-	std::unique_ptr<LDAP, _ldap_unbind> ldap_handle{ ldap_sslinitW(&inflow->DomainControllerName[2], LDAP_SSL_PORT, 1) };
+	std::unique_ptr<LDAP, _ldap_unbind> ldap_handle{ ldap_initW(&inflow->DomainControllerName[2], LDAP_PORT) };
 	if(nullptr == ldap_handle)
 		return error("Cannot initialize TLS LDAP connection");
 
